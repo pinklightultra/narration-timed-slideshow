@@ -1,0 +1,35 @@
+# Rendered output, and the temporaries --keep-temp leaves beside it.
+output/
+*.mp4
+*.webm
+*.concat.txt
+
+# Your narration. A voice recording is biometric material, and it is also usually a recording
+# of someone describing an internal system out loud, which is its own disclosure. Neither
+# belongs in a public repo, and the source this tool came from tracked 59 MB of exactly this
+# because .gitignore covered *.mp4 but not *.wav.
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.ogg
+*.opus
+
+# Your screenshots. Pictures of a real application, by definition.
+*.png
+*.jpg
+*.jpeg
+shots/
+screenshots/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

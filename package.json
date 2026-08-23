@@ -1,0 +1,19 @@
+{
+  "name": "narration-timed-slideshow",
+  "version": "1.0.0",
+  "description": "Time a folder of screenshots to a recorded narration by detecting the pauses, using ffmpeg. No dependencies.",
+  "license": "MIT",
+  "main": "narration-sync.js",
+  "bin": {
+    "narration-sync": "narration-sync.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "smoke": "node scripts/smoke-test.js",
+    "sync": "node narration-sync.js"
+  },
+  "keywords": ["ffmpeg", "screencast", "slideshow", "narration", "silencedetect", "documentation"],
+  "files": ["narration-sync.js", "scripts/", "README.md", "LICENSE"]
+}
