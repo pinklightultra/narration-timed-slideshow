@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NARRATION // Timed Slideshow Studio</title>
+  <style>
+    :root {
+      --bg-void: #090b10;
+      --chassis-dark: #10131b;
+      --chassis-mid: #171b26;
+      --chassis-card: #1d2230;
+      --border-dark: #293042;
+      --border-focus: #3e4963;
+      --text-main: #edf2f9;
+      --text-muted: #8d97aa;
+      --text-dim: #545d70;
+      --cyan: #2ce5ff;
+      --cyan-glow: rgba(44, 229, 255, 0.25);
+      --amber: #ffaa2b;
+      --amber-glow: rgba(255, 170, 43, 0.25);
+      --green: #2ee68a;
+      --green-glow: rgba(46, 230, 138, 0.25);
+      --red: #ff4d4d;
+      --accent-purple: #a87ffb;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-void);
+      color: var(--text-main);
+      font-family: "JetBrains Mono", "SF Mono", "Consolas", "Segoe UI", monospace;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Studio Header */
+    .top-header {
+      height: 52px;
+      background: linear-gradient(180deg, #1b202d 0%, #11141d 100%);
+      border-bottom: 2px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      z-index: 20;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(180deg, var(--cyan) 0%, #179cb0 100%);
+      color: #06080c;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      padding: 4px 9px;
+      border-radius: 4px;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.10em;
+      color: var(--text-main);
+    }
+
+    .brand-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      border-left: 1px solid var(--border-dark);
+      padding-left: 10px;
+    }
+
+    .status-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0d0f15;
+      border: 1px solid var(--border-dark);
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .status-pill strong {
+      color: var(--text-main);
+    }
+
+    .status-pill.online strong {
+      color: var(--green);
+    }
+
+    .status-pill.warning strong {
+      color: var(--amber);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #202636;
+      border: 1px solid var(--border-dark);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #2b3348;
+      border-color: var(--border-focus);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.cyan {
+      background: rgba(44, 229, 255, 0.14);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .btn.cyan:hover {
+      background: rgba(44, 229, 255, 0.25);
+    }
+
+    .btn.amber {
+      background: rgba(255, 170, 43, 0.14);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    .btn.amber:hover {
+      background: rgba(255, 170, 43, 0.25);
+    }
+
+    /* Main Grid Layout */
+    .studio-workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+      background: #0b0d14;
+    }
+
+    .left-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .right-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--chassis-mid);
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 14px rgba(0,0,0,0.4);
+    }
+
+    .panel-header {
+      height: 38px;
+      padding: 0 14px;
+      background: linear-gradient(180deg, #202636 0%, #161a25 100%);
+      border-bottom: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .panel-header span.highlight {
+      color: var(--cyan);
+    }
+
+    /* Waveform Deck */
+    .waveform-panel {
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .waveform-stage {
+      flex: 1;
+      background: #080a0e;
+      position: relative;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+
+    canvas#waveCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .waveform-empty-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 11.5px;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .waveform-toolbar {
+      height: 42px;
+      background: #12151f;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 10.5px;
+      flex-shrink: 0;
+    }
+
+    .param-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .param-pill label {
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .param-pill input[type="range"] {
+      width: 80px;
+      height: 4px;
+      background: #252c3c;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .param-pill input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--cyan);
+      cursor: pointer;
+    }
+
+    .param-val {
+      color: var(--cyan);
+      font-weight: 800;
+      min-width: 38px;
+    }
+
+    /* Live Presentation Viewport */
+    .viewport-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .viewport-stage {
+      flex: 1;
+      background: #06070a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .slide-display-frame {
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: 16 / 10;
+      background: #000;
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.85);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .slide-display-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .slide-overlay-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(13, 16, 23, 0.85);
+      border: 1px solid var(--border-dark);
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--cyan);
+      backdrop-filter: blur(4px);
+    }
+
+    .slide-empty-prompt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    /* Transport Controls */
+    .transport-bar {
+      height: 52px;
+      background: linear-gradient(180deg, #1d2230 0%, #131722 100%);
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .transport-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .transport-center {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .time-readout {
+      color: var(--cyan);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    .time-total {
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    /* Slide Timeline / Segments Strip (Right Panel) */
+    .timeline-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .segments-scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .segment-card {
+      background: #131620;
+      border: 1px solid #232938;
+      border-radius: 5px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .segment-card:hover {
+      border-color: var(--border-focus);
+      background: #181c28;
+    }
+
+    .segment-card.active-playback {
+      border-color: var(--cyan);
+      background: #172332;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .segment-num {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--cyan);
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .segment-thumb {
+      width: 58px;
+      height: 38px;
+      background: #090b10;
+      border: 1px solid #2b3346;
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .segment-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .segment-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .segment-time {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .segment-dur {
+      color: var(--amber);
+      font-weight: 900;
+      font-size: 9.5px;
+    }
+
+    .segment-name {
+      font-size: 9.5px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .segment-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .btn-micro {
+      padding: 2px 6px;
+      font-size: 8.5px;
+      background: #202636;
+      border: 1px solid var(--border-dark);
+      border-radius: 3px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-micro:hover {
+      background: #2a3348;
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
+    /* CLI Export Card */
+    .export-panel {
+      padding: 10px 12px;
+      background: #11141d;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .cli-box {
+      background: #080a0e;
+      border: 1px solid #222838;
+      border-radius: 4px;
+      padding: 7px 9px;
+      font-size: 9.5px;
+      color: var(--text-muted);
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .cli-box span.flag {
+      color: var(--cyan);
+    }
+    .cli-box span.val {
+      color: var(--amber);
+    }
+
+    /* Drag and Drop Overlays */
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(14, 18, 26, 0.92);
+      border: 2px dashed var(--cyan);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 50;
+      backdrop-filter: blur(4px);
+    }
+
+    .drop-overlay.drag-over {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Studio Header -->
+  <header class="top-header">
+    <div class="brand-group">
+      <div class="brand-badge">SYNC</div>
+      <div class="brand-title">NARRATION-TIMED-SLIDESHOW</div>
+      <div class="brand-sub">Speech Pause Alignment & Screencast Studio</div>
+    </div>
+
+    <div class="status-cluster">
+      <div class="status-pill" id="pillAudio">
+        AUDIO: <strong id="lblAudioStatus">None</strong>
+      </div>
+      <div class="status-pill" id="pillSlides">
+        SLIDES: <strong id="lblSlideCount">0 files</strong>
+      </div>
+      <div class="status-pill" id="pillSegments">
+        SEGMENTS: <strong id="lblSegmentCount">0 detected</strong>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <input type="file" id="fileAudioInput" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg" style="display: none;" />
+      <input type="file" id="fileSlidesInput" accept="image/*,.png,.jpg,.jpeg,.webp" multiple style="display: none;" />
+      <button class="btn" onclick="document.getElementById('fileAudioInput').click()">📁 Load Narration</button>
+      <button class="btn" onclick="document.getElementById('fileSlidesInput').click()">🖼 Load Slides</button>
+      <button class="btn cyan" id="btnAutoMatch" onclick="autoMatchScreenshots()">⚡ Auto-Align</button>
+    </div>
+  </header>
+
+  <!-- Main 2-Column Workspace -->
+  <main class="studio-workspace">
+    
+    <!-- Left Column: Waveform Deck & Visual Presentation Viewport -->
+    <div class="left-deck">
+      
+      <!-- Waveform & Silence Detection Deck -->
+      <section class="panel waveform-panel">
+        <div class="panel-header">
+          <span>1. NARRATION WAVEFORM // SILENCE DETECTION CUTS</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="font-size: 10px; color: var(--text-dim);" id="lblCursorTime">00:00.0</span>
+          </div>
+        </div>
+
+        <div class="waveform-stage" id="waveformStage">
+          <canvas id="waveCanvas"></canvas>
+          <div class="waveform-empty-hint" id="waveEmptyHint">
+            <span style="font-size: 24px;">🎙</span>
+            <span>Drop narration audio file here (.wav, .mp3, .m4a) or click "Load Narration"</span>
+          </div>
+        </div>
+
+        <div class="waveform-toolbar">
+          <div class="param-pill">
+            <label>Noise Floor:</label>
+            <input type="range" id="slNoise" min="-50" max="-15" step="1" value="-30" oninput="updateSilenceParams()" />
+            <span class="param-val" id="valNoise">-30 dB</span>
+          </div>
+
+          <div class="param-pill">
+            <label>Min Silence:</label>
+            <input type="range" id="slMinSilence" min="0.2" max="1.5" step="0.05" value="0.4" oninput="updateSilenceParams()" />
+            <span class="param-val" id="valMinSilence">0.40s</span>
+          </div>
+
+          <div class="param-pill">
+            <label>Lead-in:</label>
+            <input type="range" id="slLeadIn" min="0.05" max="0.4" step="0.05" value="0.15" oninput="updateSilenceParams()" />
+            <span class="param-val" id="valLeadIn">0.15s</span>
+          </div>
+
+          <button class="btn" style="padding: 3px 8px; font-size: 10px;" onclick="recomputeSilences()">⟳ Re-Detect</button>
+        </div>
+      </section>
+
+      <!-- Live Slide Viewport & Transport -->
+      <section class="panel viewport-panel">
+        <div class="panel-header">
+          <span>2. SYNCHRONIZED PRESENTATION STAGE</span>
+          <span class="highlight" id="lblActiveStep">STEP 01</span>
+        </div>
+
+        <div class="viewport-stage" id="viewportStage">
+          <div class="slide-display-frame" id="slideFrame">
+            <img id="mainSlideImg" src="" alt="Active Slide" style="display: none;" />
+            <div class="slide-overlay-badge" id="slideOverlayBadge">HOLD FOR STEP 1</div>
+            <div class="slide-empty-prompt" id="slideEmptyPrompt">
+              <span style="font-size: 32px;">🖼</span>
+              <span>Drop screenshot images here to populate the presentation sequence.</span>
+              <span style="font-size: 10px; color: var(--text-dim);">Files are automatically arranged using natural numerical sort (shot-1, shot-2, shot-10).</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport Bar -->
+        <div class="transport-bar">
+          <div class="transport-left">
+            <button class="btn cyan" id="btnPlay" onclick="togglePlay()">► PLAY (SPACE)</button>
+            <button class="btn" id="btnStop" onclick="stopPlay()">■ STOP</button>
+            <button class="btn" id="btnPrevStep" onclick="navStep(-1)">◀ PREV</button>
+            <button class="btn" id="btnNextStep" onclick="navStep(1)">NEXT ▶</button>
+          </div>
+
+          <div class="transport-center">
+            <span class="time-readout" id="lblPlayheadTime">00:00.0</span>
+            <span class="time-total" id="lblTotalTime">/ 00:00.0</span>
+          </div>
+
+          <div class="transport-right">
+            <button class="btn amber" id="btnCopyGroups" onclick="copyGroupsParam()">📋 Copy --groups</button>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- Right Column: Slide Timeline & Command Generator -->
+    <div class="right-deck">
+      
+      <section class="panel timeline-panel">
+        <div class="panel-header">
+          <span>3. SLIDE TIMELINE STRIP</span>
+          <button class="btn-micro" onclick="clearSlides()">CLEAR</button>
+        </div>
+
+        <div class="segments-scroll-list" id="segmentsList">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Export CLI Command Box -->
+        <div class="export-panel">
+          <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <span>CLI COMMAND GENERATOR</span>
+            <span style="color: var(--cyan); cursor: pointer;" onclick="copyFullCommand()">COPY ALL</span>
+          </div>
+
+          <div class="cli-box" id="cliCommandBox">
+            node narration-sync.js <span class="flag">--audio</span> <span class="val">"narration.wav"</span> <span class="flag">--screenshots</span> <span class="val">"./shots"</span> <span class="flag">--output</span> <span class="val">"video.mp4"</span>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <button class="btn cyan" style="flex: 1;" onclick="copyFullCommand()">📋 Copy Command</button>
+            <button class="btn" onclick="downloadCueJson()">💾 Save Cues</button>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <script>
+    // State Store
+    let audioBuffer = null;
+    let audioDuration = 0;
+    let audioFileName = 'narration.wav';
+    let audioCtx = null;
+    let activeSource = null;
+    let isPlaying = false;
+    let playStartTime = 0;
+    let playOffset = 0;
+
+    let detectedSilences = []; // [{start, end}]
+    let speechSegments = [];   // [{start, end, duration, slideIdx}]
+    let slideImages = [];      // [{name, dataUrl, file}]
+    let groupsConfig = [];     // counts of segments per slide
+
+    // Initialize audio context lazily
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    // Natural sort comparator for human-numbered filenames (shot-2 before shot-10)
+    function naturalSort(names) {
+      return names.slice().sort((a, b) => a.localeCompare(undefined, { numeric: true, sensitivity: 'base' }));
+    }
+
+    // Format seconds to mm:ss.s
+    function formatTime(sec) {
+      if (!Number.isFinite(sec) || sec < 0) return '00:00.0';
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(1);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(4, '0')}`;
+    }
+
+    // Load Audio File
+    async function loadAudioFile(file) {
+      audioFileName = file.name;
+      document.getElementById('lblAudioStatus').textContent = file.name;
+      document.getElementById('pillAudio').classList.add('online');
+
+      const arrayBuf = await file.arrayBuffer();
+      const ctx = getAudioCtx();
+      audioBuffer = await ctx.decodeAudioData(arrayBuf);
+      audioDuration = audioBuffer.duration;
+
+      document.getElementById('lblTotalTime').textContent = `/ ${formatTime(audioDuration)}`;
+      document.getElementById('waveEmptyHint').style.display = 'none';
+
+      // Detect speech segments automatically
+      detectSpeechSegmentsFromBuffer();
+      drawWaveform();
+      updateTimelineCards();
+      updateCliCommand();
+    }
+
+    // Load Screenshot Images
+    async function loadSlideFiles(files) {
+      const fileList = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (fileList.length === 0) return;
+
+      // Sort files naturally by filename
+      fileList.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+      slideImages = [];
+      for (const f of fileList) {
+        const dataUrl = await readFileAsDataUrl(f);
+        slideImages.push({ name: f.name, dataUrl, file: f });
+      }
+
+      document.getElementById('lblSlideCount').textContent = `${slideImages.length} files`;
+      document.getElementById('pillSlides').classList.add('online');
+
+      autoMatchScreenshots();
+      updateTimelineCards();
+      updateCliCommand();
+      showSlide(0);
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Silence & Speech Segment Detection Engine
+    function detectSpeechSegmentsFromBuffer() {
+      if (!audioBuffer) return;
+      const data = audioBuffer.getChannelData(0);
+      const sr = audioBuffer.sampleRate;
+      const noiseDb = parseFloat(document.getElementById('slNoise').value);
+      const minSilenceSec = parseFloat(document.getElementById('slMinSilence').value);
+      const leadInSec = parseFloat(document.getElementById('slLeadIn').value);
+
+      const linearThresh = Math.pow(10, noiseDb / 20);
+      const windowSize = Math.floor(sr * 0.04); // 40ms RMS windows
+      const totalWindows = Math.floor(data.length / windowSize);
+
+      const silences = [];
+      let inSilence = false;
+      let silenceStart = 0;
+
+      for (let i = 0; i < totalWindows; i++) {
+        let sumSq = 0;
+        const offset = i * windowSize;
+        for (let j = 0; j < windowSize; j++) {
+          const v = data[offset + j];
+          sumSq += v * v;
+        }
+        const rms = Math.sqrt(sumSq / windowSize);
+        const t = (i * windowSize) / sr;
+
+        if (rms < linearThresh) {
+          if (!inSilence) {
+            inSilence = true;
+            silenceStart = t;
+          }
+        } else {
+          if (inSilence) {
+            inSilence = false;
+            const dur = t - silenceStart;
+            if (dur >= minSilenceSec) {
+              silences.push({ start: silenceStart, end: t });
+            }
+          }
+        }
+      }
+      if (inSilence && (audioDuration - silenceStart) >= minSilenceSec) {
+        silences.push({ start: silenceStart, end: audioDuration });
+      }
+
+      detectedSilences = silences;
+
+      // Invert silences into speech segments
+      const segments = [];
+      let cursor = 0;
+      for (const s of silences) {
+        if (s.start > cursor) {
+          segments.push({
+            start: Math.max(0, cursor - leadInSec),
+            end: s.start + leadInSec,
+            duration: (s.start + leadInSec) - Math.max(0, cursor - leadInSec)
+          });
+        }
+        cursor = Math.max(cursor, s.end);
+      }
+      if (cursor < audioDuration) {
+        segments.push({
+          start: Math.max(0, cursor - leadInSec),
+          end: audioDuration,
+          duration: audioDuration - Math.max(0, cursor - leadInSec)
+        });
+      }
+
+      // Filter sub-threshold blips (< 0.25s)
+      speechSegments = segments.filter(seg => seg.duration > 0.25);
+
+      document.getElementById('lblSegmentCount').textContent = `${speechSegments.length} detected`;
+      document.getElementById('pillSegments').classList.add('online');
+    }
+
+    function updateSilenceParams() {
+      const noise = document.getElementById('slNoise').value;
+      const minS = parseFloat(document.getElementById('slMinSilence').value).toFixed(2);
+      const lead = parseFloat(document.getElementById('slLeadIn').value).toFixed(2);
+
+      document.getElementById('valNoise').textContent = `${noise} dB`;
+      document.getElementById('valMinSilence').textContent = `${minS}s`;
+      document.getElementById('valLeadIn').textContent = `${lead}s`;
+
+      recomputeSilences();
+    }
+
+    function recomputeSilences() {
+      if (!audioBuffer) return;
+      detectSpeechSegmentsFromBuffer();
+      autoMatchScreenshots();
+      drawWaveform();
+      updateTimelineCards();
+      updateCliCommand();
+    }
+
+    // Auto-match slides to detected segments
+    function autoMatchScreenshots() {
+      if (speechSegments.length === 0) return;
+      
+      // If segment count equals slide count: 1:1 mapping
+      if (slideImages.length === speechSegments.length) {
+        speechSegments.forEach((seg, idx) => {
+          seg.slideIdx = idx;
+        });
+        groupsConfig = speechSegments.map(() => 1);
+      } else if (slideImages.length > 0) {
+        // Spread evenly or distribute sequentially
+        speechSegments.forEach((seg, idx) => {
+          seg.slideIdx = Math.min(idx, slideImages.length - 1);
+        });
+      }
+    }
+
+    // Group adjacent segment (merge multiple sentences onto 1 slide)
+    function groupWithNext(segIndex) {
+      if (segIndex >= speechSegments.length - 1) return;
+      const cur = speechSegments[segIndex];
+      const nxt = speechSegments[segIndex + 1];
+
+      cur.end = nxt.end;
+      cur.duration = cur.end - cur.start;
+      speechSegments.splice(segIndex + 1, 1);
+
+      document.getElementById('lblSegmentCount').textContent = `${speechSegments.length} detected`;
+      autoMatchScreenshots();
+      drawWaveform();
+      updateTimelineCards();
+      updateCliCommand();
+    }
+
+    // Timeline Cards Rendering
+    function updateTimelineCards() {
+      const list = document.getElementById('segmentsList');
+      list.innerHTML = '';
+
+      if (speechSegments.length === 0) {
+        list.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-dim); font-size: 11px;">
+            No speech segments detected yet. Load narration audio above.
+          </div>
+        `;
+        return;
+      }
+
+      speechSegments.forEach((seg, idx) => {
+        const slide = (seg.slideIdx !== undefined && slideImages[seg.slideIdx]) ? slideImages[seg.slideIdx] : null;
+        const card = document.createElement('div');
+        card.className = 'segment-card';
+        card.id = `segCard-${idx}`;
+        card.onclick = () => seekToSegment(idx);
+
+        const thumbHtml = slide ? `<img src="${slide.dataUrl}" alt="${slide.name}" />` : '<span style="font-size:9px;color:var(--text-dim);">No Slide</span>';
+        const slideName = slide ? slide.name : 'Missing screenshot';
+
+        card.innerHTML = `
+          <div class="segment-num">${String(idx + 1).padStart(2, '0')}</div>
+          <div class="segment-thumb">${thumbHtml}</div>
+          <div class="segment-info">
+            <div class="segment-time">
+              <span>${formatTime(seg.start)} &rarr; ${formatTime(seg.end)}</span>
+              <span class="segment-dur">${seg.duration.toFixed(1)}s</span>
+            </div>
+            <div class="segment-name" title="${slideName}">${slideName}</div>
+          </div>
+          <div class="segment-actions" onclick="event.stopPropagation()">
+            ${idx < speechSegments.length - 1 ? `<button class="btn-micro" title="Merge with next sentence" onclick="groupWithNext(${idx})">+ Merge</button>` : ''}
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // Show slide in main viewport
+    function showSlide(index) {
+      const frame = document.getElementById('slideFrame');
+      const img = document.getElementById('mainSlideImg');
+      const empty = document.getElementById('slideEmptyPrompt');
+      const badge = document.getElementById('slideOverlayBadge');
+      const activeLabel = document.getElementById('lblActiveStep');
+
+      if (slideImages.length > 0 && slideImages[index]) {
+        img.src = slideImages[index].dataUrl;
+        img.style.display = 'block';
+        empty.style.display = 'none';
+        badge.textContent = `STEP ${index + 1}: ${slideImages[index].name}`;
+        activeLabel.textContent = `STEP ${String(index + 1).padStart(2, '0')} // ${slideImages[index].name}`;
+      } else {
+        img.style.display = 'none';
+        empty.style.display = 'flex';
+        activeLabel.textContent = 'NO SLIDE';
+      }
+    }
+
+    // Draw Waveform and Silence Highlights
+    function drawWaveform(playheadRatio = -1) {
+      const canvas = document.getElementById('waveCanvas');
+      const stage = document.getElementById('waveformStage');
+      if (stage.clientWidth > 0 && stage.clientHeight > 0) {
+        canvas.width = stage.clientWidth;
+        canvas.height = stage.clientHeight;
+      }
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid
+      ctx.strokeStyle = '#131822';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
+      ctx.stroke();
+
+      if (!audioBuffer) return;
+
+      const data = audioBuffer.getChannelData(0);
+      const step = Math.ceil(data.length / w);
+      const amp = (h / 2) * 0.88;
+
+      // 1. Draw Silence Regions
+      ctx.fillStyle = 'rgba(255, 77, 77, 0.08)';
+      detectedSilences.forEach(s => {
+        const x1 = (s.start / audioDuration) * w;
+        const x2 = (s.end / audioDuration) * w;
+        ctx.fillRect(x1, 0, x2 - x1, h);
+
+        ctx.strokeStyle = 'rgba(255, 77, 77, 0.25)';
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x1, 0); ctx.lineTo(x1, h);
+        ctx.moveTo(x2, 0); ctx.lineTo(x2, h);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // 2. Draw Speech Segment Highlights
+      speechSegments.forEach((seg, idx) => {
+        const x1 = (seg.start / audioDuration) * w;
+        const x2 = (seg.end / audioDuration) * w;
+        ctx.fillStyle = (idx % 2 === 0) ? 'rgba(44, 229, 255, 0.06)' : 'rgba(168, 127, 251, 0.06)';
+        ctx.fillRect(x1, 0, x2 - x1, h);
+
+        // Marker divider
+        ctx.strokeStyle = 'rgba(44, 229, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x1, 0); ctx.lineTo(x1, h);
+        ctx.stroke();
+
+        // Step number label on top
+        ctx.fillStyle = 'rgba(44, 229, 255, 0.8)';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText(`S${idx + 1}`, x1 + 4, 12);
+      });
+
+      // 3. Draw Waveform Bars
+      ctx.fillStyle = '#2ce5ff';
+      for (let x = 0; x < w; x++) {
+        let min = 1.0, max = -1.0;
+        const offset = x * step;
+        for (let j = 0; j < step && (offset + j) < data.length; j++) {
+          const v = data[offset + j];
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+        if (min > max) { min = 0; max = 0; }
+        ctx.fillRect(x, (h / 2) - max * amp, 1, Math.max(1, (max - min) * amp));
+      }
+
+      // 4. Draw Playhead Scrubber
+      if (playheadRatio >= 0 && playheadRatio <= 1) {
+        const px = playheadRatio * w;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#2ce5ff';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, h);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Audio Playback Transport
+    function togglePlay() {
+      if (isPlaying) {
+        stopPlay();
+      } else {
+        startPlay(playOffset);
+      }
+    }
+
+    function startPlay(startSec = 0) {
+      if (!audioBuffer) return;
+      const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      stopPlay();
+
+      const src = ctx.createBufferSource();
+      src.buffer = audioBuffer;
+      src.connect(ctx.destination);
+
+      const offset = Math.max(0, Math.min(audioDuration - 0.05, startSec));
+      playStartTime = ctx.currentTime - offset;
+      playOffset = offset;
+      src.start(0, offset);
+      activeSource = src;
+      isPlaying = true;
+      document.getElementById('btnPlay').textContent = '❚❚ PAUSE (SPACE)';
+
+      src.onended = () => {
+        if (activeSource === src) {
+          isPlaying = false;
+          document.getElementById('btnPlay').textContent = '► PLAY (SPACE)';
+        }
+      };
+
+      animatePlayhead();
+    }
+
+    function stopPlay() {
+      if (activeSource) {
+        try { activeSource.stop(); } catch (_) {}
+        try { activeSource.disconnect(); } catch (_) {}
+        activeSource = null;
+      }
+      isPlaying = false;
+      document.getElementById('btnPlay').textContent = '► PLAY (SPACE)';
+      drawWaveform(-1);
+    }
+
+    function seekToSegment(index) {
+      if (!speechSegments[index]) return;
+      const seg = speechSegments[index];
+      playOffset = seg.start;
+      if (isPlaying) {
+        startPlay(playOffset);
+      } else {
+        document.getElementById('lblPlayheadTime').textContent = formatTime(playOffset);
+        drawWaveform(playOffset / audioDuration);
+        showSlide(seg.slideIdx || index);
+      }
+    }
+
+    function navStep(dir) {
+      if (speechSegments.length === 0) return;
+      const curT = playOffset;
+      let curIdx = 0;
+      speechSegments.forEach((s, idx) => {
+        if (curT >= s.start && curT <= s.end) curIdx = idx;
+      });
+      const nextIdx = Math.max(0, Math.min(speechSegments.length - 1, curIdx + dir));
+      seekToSegment(nextIdx);
+    }
+
+    function animatePlayhead() {
+      if (!isPlaying || !audioBuffer) return;
+      const ctx = getAudioCtx();
+      const elapsed = ctx.currentTime - playStartTime;
+      playOffset = elapsed;
+      const ratio = elapsed / audioDuration;
+
+      document.getElementById('lblPlayheadTime').textContent = formatTime(elapsed);
+      drawWaveform(ratio);
+
+      // Find active segment and update slide viewport in real-time
+      let activeIdx = 0;
+      speechSegments.forEach((seg, idx) => {
+        if (elapsed >= seg.start && elapsed <= seg.end) {
+          activeIdx = idx;
+        }
+      });
+
+      const activeSeg = speechSegments[activeIdx];
+      if (activeSeg) {
+        showSlide(activeSeg.slideIdx !== undefined ? activeSeg.slideIdx : activeIdx);
+        document.querySelectorAll('.segment-card').forEach((c, idx) => {
+          c.classList.toggle('active-playback', idx === activeIdx);
+        });
+      }
+
+      if (elapsed < audioDuration) {
+        requestAnimationFrame(animatePlayhead);
+      } else {
+        stopPlay();
+      }
+    }
+
+    // CLI Command Generator
+    function updateCliCommand() {
+      const box = document.getElementById('cliCommandBox');
+      const noise = document.getElementById('slNoise').value;
+      const minS = parseFloat(document.getElementById('slMinSilence').value).toFixed(2);
+      const lead = parseFloat(document.getElementById('slLeadIn').value).toFixed(2);
+
+      let groupsParam = '';
+      if (groupsConfig.length > 0 && groupsConfig.some(c => c > 1)) {
+        groupsParam = ` <span class="flag">--groups</span> <span class="val">${groupsConfig.join(',')}</span>`;
+      }
+
+      box.innerHTML = `node narration-sync.js <span class="flag">--audio</span> <span class="val">"${audioFileName}"</span> <span class="flag">--screenshots</span> <span class="val">"./shots"</span> <span class="flag">--noise</span> <span class="val">${noise}</span> <span class="flag">--min-silence</span> <span class="val">${minS}</span> <span class="flag">--lead-in</span> <span class="val">${lead}</span>${groupsParam} <span class="flag">--output</span> <span class="val">"screencast.mp4"</span>`;
+    }
+
+    function copyFullCommand() {
+      const noise = document.getElementById('slNoise').value;
+      const minS = parseFloat(document.getElementById('slMinSilence').value).toFixed(2);
+      const lead = parseFloat(document.getElementById('slLeadIn').value).toFixed(2);
+      const groupsStr = (groupsConfig.length > 0 && groupsConfig.some(c => c > 1)) ? ` --groups ${groupsConfig.join(',')}` : '';
+      const cmd = `node narration-sync.js --audio "${audioFileName}" --screenshots "./shots" --noise ${noise} --min-silence ${minS} --lead-in ${lead}${groupsStr} --output "screencast.mp4"`;
+      navigator.clipboard.writeText(cmd);
+      alert('Copied CLI command to clipboard!');
+    }
+
+    function copyGroupsParam() {
+      const groupsStr = groupsConfig.join(',');
+      navigator.clipboard.writeText(groupsStr);
+      alert(`Copied groups parameter: ${groupsStr}`);
+    }
+
+    function downloadCueJson() {
+      const project = {
+        audio: audioFileName,
+        duration: audioDuration,
+        silence_params: {
+          noise_db: parseFloat(document.getElementById('slNoise').value),
+          min_silence_s: parseFloat(document.getElementById('slMinSilence').value),
+          lead_in_s: parseFloat(document.getElementById('slLeadIn').value)
+        },
+        segments: speechSegments.map((s, idx) => ({
+          step: idx + 1,
+          start: s.start,
+          end: s.end,
+          duration: s.duration,
+          slide: (s.slideIdx !== undefined && slideImages[s.slideIdx]) ? slideImages[s.slideIdx].name : null
+        }))
+      };
+      const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'narration-cues.json';
+      a.click();
+    }
+
+    function clearSlides() {
+      slideImages = [];
+      document.getElementById('lblSlideCount').textContent = '0 files';
+      document.getElementById('pillSlides').classList.remove('online');
+      updateTimelineCards();
+      showSlide(0);
+    }
+
+    // Drag and Drop Event Listeners
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('fileAudioInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) loadAudioFile(e.target.files[0]);
+      });
+      document.getElementById('fileSlidesInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) loadSlideFiles(e.target.files);
+      });
+
+      // Waveform click to scrub
+      const waveStage = document.getElementById('waveformStage');
+      waveStage.addEventListener('click', (e) => {
+        if (!audioBuffer) return;
+        const rect = waveStage.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        playOffset = ratio * audioDuration;
+        if (isPlaying) {
+          startPlay(playOffset);
+        } else {
+          document.getElementById('lblPlayheadTime').textContent = formatTime(playOffset);
+          drawWaveform(ratio);
+        }
+      });
+
+      // Global Keyboard Shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.code === 'KeyJ') {
+          navStep(1);
+        } else if (e.code === 'KeyK') {
+          navStep(-1);
+        }
+      });
+
+      // Window resize
+      window.addEventListener('resize', () => {
+        drawWaveform();
+      });
+
+      // Drag and drop for audio and slides
+      window.addEventListener('dragover', (e) => e.preventDefault());
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files);
+        const audio = files.find(f => f.type.startsWith('audio/') || /\.(wav|mp3|m4a|ogg|flac)$/i.test(f.name));
+        const images = files.filter(f => f.type.startsWith('image/') || /\.(png|jpg|jpeg|webp)$/i.test(f.name));
+
+        if (audio) loadAudioFile(audio);
+        if (images.length > 0) loadSlideFiles(images);
+      });
+
+      drawWaveform();
+    });
+  </script>
+</body>
+</html>

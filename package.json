@@ -12,7 +12,8 @@
   },
   "scripts": {
     "smoke": "node scripts/smoke-test.js",
-    "sync": "node narration-sync.js"
+    "sync": "node narration-sync.js",
+    "studio": "node server.js"
   },
   "keywords": ["ffmpeg", "screencast", "slideshow", "narration", "silencedetect", "documentation"],
   "files": ["narration-sync.js", "scripts/", "README.md", "LICENSE"]
