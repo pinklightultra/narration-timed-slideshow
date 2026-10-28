@@ -54,7 +54,7 @@ This is a trace of `silencesToSpeechSegments()` and of that formula, on a made-u
 | Screenshot 1 | 0.0–1.0 s | 0.00–1.15 s |
 | Screenshot 2 | 1.6–3.0 s | 1.15–5.00 s |
 
-The 0.45 s of pause after 1.15 s plays under screenshot 2. The last hold runs to 5.00 s because the take ends in silence.
+The 0.45 s of pause after 1.15 s plays under screenshot 2. The last hold runs to 5.00 s because the take ends in silence. Those times are the concat-list formula, to the millisecond. The silent file is encoded with `-vsync vfr`, so a cut can be stamped on a nearby tick. The table is not a frame capture.
 
 **6. Encode the slideshow, then mux the voice.** The concat demuxer writes a silent video at `--width` by `--height` (default 1440x900). The scale filter fits each image inside that frame and keeps the aspect ratio. A source smaller than the frame is enlarged until one edge meets it. The other axis is padded in black. The picture is not cropped. A second ffmpeg invocation muxes the narration: H.264 at `-crf 20` with `-preset fast`, AAC at 128 kbps, and `-shortest`. The concat list and the silent video are deleted after the mux. `--keep-temp` leaves both beside the output, named `<output>.concat.txt` and `<output>.silent.mp4`.
 
@@ -64,11 +64,21 @@ If the segment count and the screenshot count differ, the script warns and conti
 
 ## Result
 
-One mp4. The default path is `./output/synced.mp4`. Parent directories are created. The log prints the path, the file size, and three durations: the muxed file, the source audio, and the silent slideshow.
+One mp4. The default path is `./output/synced.mp4`. Parent directories are created.
 
 Inside the file: your screenshots, in numeric filename order, each held for the interval in step 5, with the narration on the audio track. Every cut is hard. The frame does not zoom, pan, or highlight.
 
-On a render, exit 0 means the mux finished and the audio was not trimmed. A count mismatch is a warning on that same exit. It does not fail the process. Exit 2 means the file was written and the end of the narration was trimmed. The warning names the number of seconds.
+The log ends with the path, the size, and a duration line:
+
+```text
+duration: 6.0s  (audio 6.0s, video 4.4s)
+```
+
+That line is from a real run of the smoke test's fixture: the 6 s tone, `shot-1.png`, `shot-2.png`, `shot-10.png`, rendered at 320x240, on ffmpeg 6.1.1. The first number is the muxed file. `audio` is the source. `video` is `ffprobe`'s format duration of the silent intermediate, measured before the mux. That intermediate is variable frame rate. In this run its container duration was 4.360 s, and its four frame timestamps were 0.000, 1.160, 3.160, and 6.000. The muxed file was 6.000 s. The process exited 0. The truncation warning did not fire.
+
+Read the first number. A smaller `video` figure is the container duration of that intermediate, not a trimmed narration. The truncation check compares the muxed file with the source audio and fires when the shortfall is over 0.25 s.
+
+On a render, exit 0 means the mux finished and that check did not fire. A count mismatch is a warning on that same exit. It does not fail the process. With two screenshots against the three segments above, the script warned, held the extra segment on the last screenshot, and exited 0. Exit 2 means the file was written and the end of the narration was trimmed. The warning names the number of seconds.
 
 ## Requirements
 
@@ -175,13 +185,13 @@ In the page:
 
 Play is the browser playing your audio against the browser's segment list. It is not a playback of the mp4.
 
-**Copy Command**, **Copy --groups**, and **Save Cues** sit under the timeline. Use them as notes. Take the timing you will publish from `--dry-run`. Four things the page shows are properties of the preview. The CLI will not reproduce them.
+**Copy Command**, **Copy --groups**, and **Save Cues** sit under the timeline. Use them as notes. Take the timing you will publish from `--dry-run`. With nothing loaded, the command box shows `--output "video.mp4"`. After a narration is loaded, the generated command uses that file's name and `--output "screencast.mp4"`. It also uses the literal directory `./shots`, not the folder you dropped. Four things the page shows are properties of the preview. The CLI will not reproduce them.
 
 **The detectors are different code.** The CLI calls ffmpeg `silencedetect` with the noise and duration arguments above, and without `mono=1`, so the filter's default channel mode is what runs. `detectSpeechSegmentsFromBuffer()` measures RMS on channel 0 only, in 40 ms windows, and compares it with `10^(dB/20)`. It then pads each segment by the lead-in on both sides, and it drops a segment whose padded duration is 0.25 s or shorter. The CLI drops a raw speech gap of 0.15 s or shorter, and it applies the lead-in at the end of a hold only. Browser segments can overlap. CLI holds do not.
 
 A 0.10 s gap that does not sit against the start of the file fails the CLI test and is dropped. The same gap in the page, with the default 0.15 s lead-in on both edges, has a padded duration of 0.40 s and is kept. The segment count in the page header is the browser count. The count in `--dry-run` is the count the mp4 uses.
 
-**Merge does not become `--groups`.** `groupsConfig` is filled with a list of ones, and only when the screenshot count equals the segment count. `groupWithNext()` shortens the segment list and calls that function again. After the merge the counts differ, so the list of ones is left as it was. **Copy Command** appends `--groups` only when some stored count is greater than 1. A merge never meets that test, so the command you copy has no `--groups` at all. **Copy --groups** copies the stale list. Its sum is the segment count from before the merge, and the CLI rejects that sum. The copied command also uses the audio file's name, not its path, and the literal directory `./shots`. After a merge, write `--groups` from the CLI's own segment list.
+**Merge does not become `--groups`.** `groupsConfig` is filled with a list of ones, and only when the screenshot count equals the segment count. `groupWithNext()` shortens the segment list and calls that function again. After the merge the counts differ, so the list of ones is left as it was. **Copy Command** appends `--groups` only when some stored count is greater than 1. A merge never meets that test, so the command you copy has no `--groups` at all. **Copy --groups** copies the stale list. Its sum is the segment count from before the merge, and the CLI rejects that sum. After a merge, write `--groups` from the CLI's own segment list.
 
 When you do not merge, and you have more segments than screenshots, the page and the CLI do the same thing with the extras: they hold them on the last screenshot. The cuts can still disagree, because the detectors disagree.
 
