@@ -1,6 +1,6 @@
-# Normalize to LF in the repository and on checkout. Everything tracked here is
-# JavaScript, JSON or Markdown.
+# Check text out as LF. The Windows launcher is the exception.
 * text=auto eol=lf
+*.bat text eol=crlf
 
 # Binary, if any ever gets committed deliberately.
 *.png binary

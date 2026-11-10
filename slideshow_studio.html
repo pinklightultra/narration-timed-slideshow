@@ -632,7 +632,7 @@
           <canvas id="waveCanvas"></canvas>
           <div class="waveform-empty-hint" id="waveEmptyHint">
             <span style="font-size: 24px;">🎙</span>
-            <span>Drop narration audio file here (.wav, .mp3, .m4a) or click "Load Narration"</span>
+            <span>Drop a narration here (.wav, .mp3, .m4a, .flac, .ogg) or click Load Narration</span>
           </div>
         </div>
 
@@ -761,11 +761,6 @@
       return audioCtx;
     }
 
-    // Natural sort comparator for human-numbered filenames (shot-2 before shot-10)
-    function naturalSort(names) {
-      return names.slice().sort((a, b) => a.localeCompare(undefined, { numeric: true, sensitivity: 'base' }));
-    }
-
     // Format seconds to mm:ss.s
     function formatTime(sec) {
       if (!Number.isFinite(sec) || sec < 0) return '00:00.0';
@@ -797,10 +792,11 @@
 
     // Load Screenshot Images
     async function loadSlideFiles(files) {
-      const fileList = Array.from(files).filter(f => f.type.startsWith('image/'));
+      const fileList = Array.from(files).filter((f) =>
+        f.type.startsWith('image/') || /\.(png|jpg|jpeg|webp)$/i.test(f.name));
       if (fileList.length === 0) return;
 
-      // Sort files naturally by filename
+      // Numeric filename order, the same compare as naturalSort() in narration-sync.js.
       fileList.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
       slideImages = [];
@@ -896,7 +892,7 @@
         });
       }
 
-      // Filter sub-threshold blips (< 0.25s)
+      // Drop a padded segment of 0.25s or shorter. A breath or a click, not a step.
       speechSegments = segments.filter(seg => seg.duration > 0.25);
 
       document.getElementById('lblSegmentCount').textContent = `${speechSegments.length} detected`;
