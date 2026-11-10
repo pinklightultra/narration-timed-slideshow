@@ -31,7 +31,7 @@ const screenshotsDir = get('--screenshots');
 const outputPath = get('--output');
 const noiseDb = get('--noise', '-30');
 const minSilence = Number(get('--min-silence', '0.4'));
-const leadIn = Number(get('--lead-in', '0.15')); // buffer after each cut so words are not clipped
+const leadIn = Number(get('--lead-in', '0.15')); // seconds of the following pause kept on this screenshot
 const groupsArg = get('--groups', null);
 const dryRun = has('--dry-run');
 const keepTemp = has('--keep-temp');
@@ -245,9 +245,10 @@ function main() {
   let coveredUntil = 0;
   segments.forEach((seg, i) => {
     const file = path.resolve(screenshotsDir, screenshots[Math.min(i, screenshots.length - 1)]);
-    // Each hold runs to the end of its segment plus the lead-in, measured from where the
-    // previous hold stopped. Silence is therefore absorbed into the preceding screenshot
-    // rather than showing a blank frame.
+    // Hold i runs from where the previous hold stopped to the end of this speech segment
+    // plus the lead-in. Only that lead-in of the following pause stays on this screenshot.
+    // The rest of the pause is the start of the next hold, so the next picture is already
+    // up when the next sentence starts. Holds are contiguous. There is no blank frame.
     //
     // The last hold also runs to the end of the audio. Recordings almost always end with a
     // beat of silence after the final word, and without this the video stops short, -shortest

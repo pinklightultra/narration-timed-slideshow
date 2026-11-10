@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
- * server.js -- Zero-dependency companion server for Slideshow Studio.
+ * server.js -- local server for Slideshow Studio. No dependencies.
  *
- * Hosts slideshow_studio.html and provides endpoints for local ffmpeg execution.
+ * Serves slideshow_studio.html on 127.0.0.1.
+ * GET /api/status returns { ok: true, app, port }.
+ * POST /api/render runs narration-sync.js with filesystem paths from the JSON
+ * body (audio, screenshots, and optional output, groups, noise, min_silence,
+ * lead_in). The page does not call that route. The mp4 still comes from the
+ * CLI. The route does not accept --width or --height.
  *
  * Usage:
  *   node server.js
@@ -105,9 +110,17 @@ const server = http.createServer(async (req, res) => {
       child.on('close', code => {
         if (code === 0) {
           return sendJson(res, { ok: true, message: 'Render completed successfully', stdout, output });
-        } else {
-          return sendJson(res, { error: `Render failed with exit code ${code}`, stderr, stdout }, 500);
         }
+        // Exit 2 is the CLI's "file written, narration trimmed" status, not a missed render.
+        if (code === 2) {
+          return sendJson(res, {
+            error: 'The mp4 was written, but the end of the narration was trimmed.',
+            stderr,
+            stdout,
+            output,
+          }, 500);
+        }
+        return sendJson(res, { error: `Render failed with exit code ${code}`, stderr, stdout }, 500);
       });
     } catch (e) {
       return sendJson(res, { error: e.message }, 500);
